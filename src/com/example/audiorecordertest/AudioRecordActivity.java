@@ -10,18 +10,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.database.Cursor;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class AudioRecordActivity extends Activity {
 
@@ -61,6 +66,32 @@ public class AudioRecordActivity extends Activity {
 		}
 	}
 
+	public void onActivityResult(int requestCode, int resultCode, Intent data){  
+        //super.onActivityResult(requestCode, resultCode, data);  
+        //这里我们就可以获取到刚刚录制的音频的Uri，可以进行播放等操作，这里显示返回的Uri  
+        if(resultCode == RESULT_OK && requestCode == 1){  
+            Uri audioPath = data.getData();  
+            Toast.makeText(this, audioPath.toString(), Toast.LENGTH_LONG).show();
+            TextView show = (TextView) findViewById(R.id.view_state);
+            
+            Cursor cursor = getContentResolver().query(audioPath, null, null, null, null);
+            cursor.moveToFirst();
+//            int colum_cnt = cursor.getColumnCount();
+//            String colum_name[] = cursor.getColumnNames();
+            String text = "save path: "+cursor.getString(1);// colum_name[0];
+            
+//            for( int i = 0; i < colum_cnt; ++i )
+//            {
+//            	text += (cursor.getColumnName(i)+": ");
+//            	text += (cursor.getString(i)+"\n");
+//            }
+            File audio_tmp = new File(cursor.getString(1));
+            audio_tmp.renameTo(audioFile);
+            show.setText(text);
+              
+        }  
+    }
+	
 	public void onClick(View v) {
 		int id = v.getId();
 		switch (id) {
@@ -87,6 +118,11 @@ public class AudioRecordActivity extends Activity {
 			// 完成 播放
 			this.isPlaying = false;
 			break;
+		case R.id.btn_native_recorder:
+			//调用Android自带的音频录制应用  
+            Intent intent = new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION);  
+            startActivityForResult(intent, 1);  
+		
 		}
 	}
 
